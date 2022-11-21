@@ -18,71 +18,91 @@ void separateParagraphs(char temp[200], int counter) {
 	{
 		result[i] = temp[i];
 	}
-
 	int i = counter - 1;
 	__asm {
 
 		xor esi, esi; //обнуление используемых регистров
 		xor edi, edi
-		xor ebx, ebx
-		xor edx, edx
-		xor eax, eax
+			xor ebx, ebx
+			xor edx, edx
+			xor eax, eax
 
 			;//Загруска адресов массивов
-			lea edi, output
+		    lea edi, output
 			lea esi, result
 
 			mov ebx, -1
 			mov edx, -1
 			mov ecx, 0
 			xor eax, eax;
-			xor ebx, ebx
+		xor ebx, ebx
 
-		strt :
-			inc edx
+			strt :
+		inc edx
 			inc ebx
 			cmp[esi + edx], '\n';//проверка на абзац. Если есть символ переноса строки нет, то записываем символ из массива result в output, 
 								;// иначе берем следующую ячейку массива output и складываем туда символы до символа переноса строки
-			jz m1
+		    jz m1
 			jnz m2
-	
-		
 
-		m1 :
-			inc ecx;//переходим на следующую строчку двумерного массива
-			xor ebx, ebx;//обнуляем счетсчик количества символов	
-			jmp checkEnd
 
-		m2 :
-			push ecx
+
+		m1:
+		inc ecx;//переходим на следующую строчку двумерного массива
+		xor ebx, ebx;//обнуляем счетсчик количества символов	
+		jmp checkEnd
+
+			m2 :
+		push ecx
 			imul ecx, ecx, 50;//умножаем ecx на количество символов в двумерном массиве
-			add ecx, ebx;// добавляем к элементу его позицию
-			mov al, [esi + edx]
-			
+		add ecx, ebx;// добавляем к элементу его позицию
+		mov al, [esi + edx]
+
 			mov[edi + ecx - 1], al; //записываем символ из result в output
-			pop ecx
+		pop ecx
 			jmp checkEnd
 
 
 
 
 
-		checkEnd : ;// проверка на конец массива
-			cmp edx, i
+		checkEnd:;// проверка на конец массива
+		cmp edx, i
 			jz ending
 			jnz strt
 
 			;//конец
 	ending:
-			push ecx
+		push ecx
 			imul ecx, ecx, 50
 			add ecx, ebx
 			mov[edi + ecx - 1], '\0';//замена последнего элемента массива 
-			pop ecx
+		pop ecx
 			mov counter, ecx
 
 	}
+	//Уничтожение строк с пробелами
+	/*__asm {
+		lea esi, output
+		mov ecx, i
 
+		xor ebx,ebx
+
+		strt:
+		mov al, [esi+ebx]
+		cmp al, ' '
+		jz check
+		jnz m2
+
+		check :
+		mov al, [esi + 1]
+		cmp al, ' '
+		jnz strt
+		inc ebx
+
+		checkEnd:
+		cmp ebx,i
+	}*/
 }
 
 //Считает количество абзацев
@@ -99,60 +119,60 @@ int countParagraphs(char temp[200], int counter) {
 
 		xor esi, esi; //обнуление используемых регистров
 		xor edi, edi
-		xor ebx, ebx
-		xor edx, edx
-		xor eax, eax
+			xor ebx, ebx
+			xor edx, edx
+			xor eax, eax
 
 			;//Загруска адресов массивов
-			lea edi, paragraphs
+		lea edi, paragraphs
 			lea esi, result
 
 			mov edx, -1
 			mov ecx, -1
 			xor eax, eax;
-			xor ebx, ebx
+		xor ebx, ebx
 
 			strt :
-				inc edx
-				inc ebx
-				cmp[esi + edx], '\n'		;//Проверка на символ перевода строки
-				jz m1
-				jnz checkEnd
+		inc edx
+			inc ebx
+			cmp[esi + edx], '\n';//Проверка на символ перевода строки
+		jz m1
+			jnz checkEnd
 
-					
 
-			m1 :
-				inc ecx
-				dec ebx							 ;//Т.К. в ebx хранится на 1 символ больше (символ переноса строки), уменьшаем его значение на 1
-				mov[edi + ecx * 4], ebx			;//Записываем количество символов в массив paragraphs
-				mov ebx, 0
-				cmp edx, i
-				jz ending
-				jnz strt
 
-			
+		m1:
+		inc ecx
+			dec ebx;//Т.К. в ebx хранится на 1 символ больше (символ переноса строки), уменьшаем его значение на 1
+		mov[edi + ecx * 4], ebx;//Записываем количество символов в массив paragraphs
+		mov ebx, 0
+			cmp edx, i
+			jz ending
+			jnz strt
 
-			checkEnd :
-				cmp edx, i			;//Проверка на конец массива символов
-				jz m1
-				jnz strt
+
+
+		checkEnd:
+		cmp edx, i;//Проверка на конец массива символов
+		jz m1
+			jnz strt
 
 
 			ending :
-				inc ecx
-				mov counterP, ecx		;// сохраняем в переменную количество абзацев
-				cmp counterP, 1
-				jz onlyOneP
-				jnz e
+		inc ecx
+			mov counterP, ecx;// сохраняем в переменную количество абзацев
+		cmp counterP, 1
+			jz onlyOneP
+			jnz e
 
-			onlyOneP :				;//Если абзац только один, то устанавливаем флаг (не требуются перестановки)
-				inc flag
+			onlyOneP : ;//Если абзац только один, то устанавливаем флаг (не требуются перестановки)
+		inc flag
 
 			e :
 	}
 	for (int i = 0; i < counterP; i++)
 	{
-		cout << i + 1 << " Абзац: " << paragraphs[i] << " символа(ов)\n" <<"Текст: " << output[i] << endl;
+		cout << i + 1 << " Абзац: " << paragraphs[i] << " символа(ов)\n" << "Текст: " << output[i] << endl;
 	}
 	return flag;
 
@@ -181,18 +201,18 @@ void asmBubbleSort() {
 		mov[esi + ecx * 4 - 4], eax
 
 			;//Меняем значения массива output исходя из значений массива paragraphs
-		xor edx, edx
+			xor edx, edx
 			push ecx
 			imul ecx, ecx, 50
 
-		cngOutpt:
-			mov al, [edi + ecx - 1]
+			cngOutpt:
+		mov al, [edi + ecx - 1]
 			xchg[edi + ecx + 49], al
 			mov[edi + ecx - 1], al
 			inc edx
 			cmp edx, 50
 			loopnz cngOutpt
-		pop ecx
+			pop ecx
 
 
 
@@ -209,7 +229,7 @@ void asmBubbleSort() {
 	ending:
 
 	}
-	printf("\n");
+
 }
 
 int main()
@@ -224,16 +244,18 @@ int main()
 	counter = 0;
 	char ch, temp[200];
 	inputFile.seekg(0); //Считываем символы с 0 позиции файла
-	while (inputFile) {
+	while (inputFile) {  
 		inputFile.get(ch);
 		temp[counter] = ch;
 		counter++;
-		if (counter >= 200)
+		if (counter >= 200)			//Если в символе больше файлов, чем может вместить массив - выход
 		{
+			inputFile.close();
 			printf("Слишком много символов");
 			return 0;
 		}
 	}
+	//Проверка файла на пустоту
 	if (counter == 1)
 	{
 		inputFile.close();
@@ -247,15 +269,18 @@ int main()
 		result[i] = temp[i];
 	}
 	cout << "Данные из файла:" << endl;
+
 	separateParagraphs(temp, counter);
 	l = countParagraphs(temp, counter);
-	if (l != 1)
-	{
-		asmBubbleSort();
-	}
+
+	if (l != 1) asmBubbleSort();
+
 	cout << "Отсортированные данные:" << endl;
+
 	ofstream outputFile("output.txt"); //запись в файл
-	int k=1;
+
+	int k = 1;
+
 	for (int i = 0; i < counterP; i++)
 	{
 		if (strlen(output[i]) != 0)
@@ -265,8 +290,11 @@ int main()
 			k++;
 		}
 	}
+
 	outputFile.close();
-	cout << "Отсортированные данные сохранены в файле output.txt" << endl;
+
+	cout << "Отсортированные данные сохранены в файле output.txt\n" << endl;
+
 	system("pause");
 	return 0;
 }
