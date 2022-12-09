@@ -1,65 +1,129 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
+#include <cstring>
 
 using namespace std;
 
 char result[10][20];
-char output[30][50];
+char output[30][50],tmp[30][50];
 int counter;
 int counterP;
-int paragraphs[20];
+int paragraphs[30];
+char temp1[256],q[256];
+
+
+int qwe(int counter) {
+	_asm {
+		xor esi, esi; //обнуление используемых регистров
+		xor edi, edi
+		xor ebx, ebx
+		xor edx, edx
+		xor eax, eax
+		mov ecx,counter
+			;//Загруска адресов массивов
+		lea edi, output
+		lea esi, q
+			strt:
+		mov al, [edi+ebx]
+		mov [esi+ebx],al
+		inc ebx
+		cmp al, ' '
+		jz voidSym
+		cmp al, '\t'
+		jz voidSym
+		cmp al, '\0'
+		jz check
+		xor ebx,ebx
+		xor edx,edx
+		add edi,50
+		loop strt
+
+		voidSym:
+			inc edx
+			jmp strt
+
+		check:
+			dec ebx
+			cmp ebx,edx
+			jz voidLine
+			push ecx
+			mov ecx,ebx
+			
+			
+			loop1:
+			mov al,[esi+ecx]
+			mov [edi+ecx],al
+			loop loop1
+		
+			pop ecx
+			add edi,50
+			xor ebx,ebx
+			xor edx,edx
+			loop strt
+	
+		voidLine:
+			xor ebx, ebx
+				add edi, 50
+			xor edx, edx
+			loop strt
+
+	}
+	printf("asdasd");
+}
 
 //Разделяет параграфы по массиву output
-void separateParagraphs(char temp[200], int counter) {
+//Возвращает количество абзацев
+int separateParagraphs( int counter) {
 
-	char result[200];
-	for (int i = 0; i < counter - 1; i++)
-	{
-		result[i] = temp[i];
-	}
 	int i = counter - 1;
 	__asm {
 
-		xor esi, esi; //обнуление используемых регистров
-		xor edi, edi
+			xor esi, esi; //обнуление используемых регистров
+			xor edi, edi
 			xor ebx, ebx
 			xor edx, edx
 			xor eax, eax
 
 			;//Загруска адресов массивов
-		    lea edi, output
-			lea esi, result
+			lea edi, output
+			lea esi, temp1
 
 			mov ebx, -1
 			mov edx, -1
 			mov ecx, 0
 			xor eax, eax;
-		xor ebx, ebx
+			xor ebx, ebx
 
-			strt :
-		inc edx
+		strt :
+			inc edx
 			inc ebx
 			cmp[esi + edx], '\n';//проверка на абзац. Если есть символ переноса строки нет, то записываем символ из массива result в output, 
 								;// иначе берем следующую ячейку массива output и складываем туда символы до символа переноса строки
-		    jz m1
+			jz m1
 			jnz m2
 
 
 
 		m1:
-		inc ecx;//переходим на следующую строчку двумерного массива
-		xor ebx, ebx;//обнуляем счетсчик количества символов	
-		jmp checkEnd
+			; cmp[esi + edx + 1], '\n'
+				; jz checkEnd
+			push esi
+			lea esi, paragraphs
+			mov [esi+ecx*4], ebx
+			pop esi
+			xor ebx, ebx;//обнуляем счетсчик количества символов	
+			inc ecx;//переходим на следующую строчку двумерного массива	
+			jmp checkEnd
 
-			m2 :
-		push ecx
+		m2 :
+			push ecx
 			imul ecx, ecx, 50;//умножаем ecx на количество символов в двумерном массиве
-		add ecx, ebx;// добавляем к элементу его позицию
-		mov al, [esi + edx]
-
+			add ecx, ebx;// добавляем к элементу его позицию
+			mov al, [esi + edx]
 			mov[edi + ecx - 1], al; //записываем символ из result в output
-		pop ecx
+			pop ecx
 			jmp checkEnd
 
 
@@ -67,42 +131,80 @@ void separateParagraphs(char temp[200], int counter) {
 
 
 		checkEnd:;// проверка на конец массива
-		cmp edx, i
+			cmp edx, i
 			jz ending
 			jnz strt
 
 			;//конец
 	ending:
-		push ecx
+			push ecx
 			imul ecx, ecx, 50
 			add ecx, ebx
 			mov[edi + ecx - 1], '\0';//замена последнего элемента массива 
-		pop ecx
-			mov counter, ecx
+			pop ecx
+			lea esi, paragraphs
+			mov [esi+ecx*4],ebx
+			mov counterP, ecx
+			inc counterP
+	}
+
+	int f=0;
+	for (int i = 0; i < counterP; i++)
+	{
+		paragraphs[i] -= 1;
+		if (paragraphs[i] != 0) {
+			strcpy(tmp[f], output[i]);
+			f++;
+		};
+		cout<<"\n" << i + 1 << " Абзац:" << output[i] << endl;
+		cout << "Количество символов: " << paragraphs[i] << endl;
+	}
+	int flag = 0,tempCounterP=counterP;
+	for (int i = 0; i < counterP; i++)
+	{
+		flag = 0;
+		strcpy(output[i],tmp[i]);
+		_asm {
+			xor edx,edx
+			lea edi, output
+
+			lea esi, paragraphs
+			xor ebx,ebx
+			mov ecx,i
+			imul edx, ecx,50
+			strt1:
+			mov al,[edi+edx]
+			inc edi
+			inc ebx
+			cmp al, 0
+			jz write
+			jmp strt1
+
+				write:
+			mov [esi+ecx*4], ebx
+			cmp ebx, 1
+			jnz ex
+			inc flag
+		
+				
+			ex:
+		}
+		if (flag == 1) tempCounterP -= 1;		
 
 	}
-	//Уничтожение строк с пробелами
-	/*__asm {
-		lea esi, output
-		mov ecx, i
+	_asm {
+		mov eax, tempCounterP
+		mov counterP,eax
+	}
+	cout << "Без пустых строк (за пустые строки считаются те строки, которые не содержат ни 1 символ)" << endl;
+	for (int i = 0; i < counterP; i++)
+	{
+		paragraphs[i] -= 1;
+		cout << "\n" << i + 1 << " Абзац:" << output[i] << endl;
+		cout << "Количество символов: " << paragraphs[i] << endl;
+	}
+	return counterP;
 
-		xor ebx,ebx
-
-		strt:
-		mov al, [esi+ebx]
-		cmp al, ' '
-		jz check
-		jnz m2
-
-		check :
-		mov al, [esi + 1]
-		cmp al, ' '
-		jnz strt
-		inc ebx
-
-		checkEnd:
-		cmp ebx,i
-	}*/
 }
 
 //Считает количество абзацев
@@ -124,7 +226,7 @@ int countParagraphs(char temp[200], int counter) {
 			xor eax, eax
 
 			;//Загруска адресов массивов
-		lea edi, paragraphs
+			lea edi, paragraphs
 			lea esi, result
 
 			mov edx, -1
@@ -142,10 +244,13 @@ int countParagraphs(char temp[200], int counter) {
 
 
 		m1:
-		inc ecx
+			cmp[esi + edx+1], '\n';
+			jz checkEnd
+
+			inc ecx
 			dec ebx;//Т.К. в ebx хранится на 1 символ больше (символ переноса строки), уменьшаем его значение на 1
-		mov[edi + ecx * 4], ebx;//Записываем количество символов в массив paragraphs
-		mov ebx, 0
+			mov[edi + ecx * 4], ebx;//Записываем количество символов в массив paragraphs
+			mov ebx, 0
 			cmp edx, i
 			jz ending
 			jnz strt
@@ -153,8 +258,8 @@ int countParagraphs(char temp[200], int counter) {
 
 
 		checkEnd:
-		cmp edx, i;//Проверка на конец массива символов
-		jz m1
+			cmp edx, i;//Проверка на конец массива символов
+			jz m1
 			jnz strt
 
 
@@ -201,7 +306,7 @@ void asmBubbleSort() {
 		mov[esi + ecx * 4 - 4], eax
 
 			;//Меняем значения массива output исходя из значений массива paragraphs
-			xor edx, edx
+		xor edx, edx
 			push ecx
 			imul ecx, ecx, 50
 
@@ -242,18 +347,22 @@ int main()
 		return 0;
 	}
 	counter = 0;
-	char ch, temp[200];
+	char ch, temp[256];
 	inputFile.seekg(0); //Считываем символы с 0 позиции файла
-	while (inputFile) {  
+	while (inputFile) {
 		inputFile.get(ch);
 		temp[counter] = ch;
 		counter++;
-		if (counter >= 200)			//Если в символе больше файлов, чем может вместить массив - выход
+		if (counter >= 256)			//Если в файле больше символов, чем может вместить массив - выход
 		{
 			inputFile.close();
-			printf("Слишком много символов");
-			return 0;
+			printf("Символов больше 256, поэтому берутся только первые 256");
+			break;
 		}
+	}
+	for (int i = 0; i < counter - 1; i++)
+	{
+		temp1[i] = temp[i];
 	}
 	//Проверка файла на пустоту
 	if (counter == 1)
@@ -263,19 +372,14 @@ int main()
 		return 0;
 	}
 	inputFile.close();
-	char result[200];
-	for (int i = 0; i < counter - 1; i++)
-	{
-		result[i] = temp[i];
-	}
-	cout << "Данные из файла:" << endl;
-
-	separateParagraphs(temp, counter);
-	l = countParagraphs(temp, counter);
-
+	
+	cout << "***************Данные из файла:****************" << endl;
+	l=separateParagraphs(counter);
+//	qwe(l);
+	//l = countParagraphs(temp, counter);
 	if (l != 1) asmBubbleSort();
 
-	cout << "Отсортированные данные:" << endl;
+	cout << "\n\n**************Отсортированные данные:*****************" << endl;
 
 	ofstream outputFile("output.txt"); //запись в файл
 
