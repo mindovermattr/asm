@@ -107,11 +107,9 @@ int separateParagraphs( int counter) {
 
 
 		m1:
-			; cmp[esi + edx + 1], '\n'
-				; jz checkEnd
-			push esi
+			push esi;//Ложим в стек адрес, чтобы его не потерять
 			lea esi, paragraphs
-			mov [esi+ecx*4], ebx
+			mov[esi + ecx * 4], ebx;//
 			pop esi
 			xor ebx, ebx;//обнуляем счетсчик количества символов	
 			inc ecx;//переходим на следующую строчку двумерного массива	
@@ -387,12 +385,11 @@ int main()
 
 	for (int i = 0; i < counterP; i++)
 	{
-		if (strlen(output[i]) != 0)
-		{
-			cout << k << " Абзац: " << output[i] << "\n" << "Символов " << paragraphs[i] << "\n" << endl;
-			outputFile << output[i] << endl;
-			k++;
-		}
+		
+		cout << k << " Абзац: " << output[i] << "\n" << "Символов " << paragraphs[i] << "\n" << endl;
+		outputFile << output[i] << endl;
+		k++;
+		
 	}
 
 	outputFile.close();
