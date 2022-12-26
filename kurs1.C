@@ -1,7 +1,6 @@
 #include <fstream>	//Для работы с файлами
 #include <iostream>	//Для работы с потоковым вводом/выводом
-#include <windows.h>
-#include <chrono>	//Для тестирование быстроты выполнения
+//#include <chrono>	//Для тестирование быстроты выполнения
 
 using namespace std;
 
@@ -9,7 +8,7 @@ using namespace std;
 //Разделяет параграфы по массиву output
 // В функцию передается указатель на массив символов из файла, 
 //Возвращает количество абзацев, или 0, если в одном из абзацев более 150 символов
-int separateParagraphs(char* temp1, int counter, int* paragraphs, char output[500][400]) {
+int separateParagraphs(char* temp1, int counter, int* paragraphs, char output[250][1500]) {
 	int counterP;
 	int i = counter - 1;
 	__asm {
@@ -59,7 +58,7 @@ int separateParagraphs(char* temp1, int counter, int* paragraphs, char output[50
 			;//Запись элемента в двумерный массив output
 	m2:
 		push ecx;//Сохраняем значение ecx
-			imul ecx, ecx, 400;//умножаем ecx на количество символов в одной строчке двумерного массива
+			imul ecx, ecx, 1500;//умножаем ecx на количество символов в одной строчке двумерного массива
 			add ecx, ebx;// добавляем к элементу его позицию
 			mov al, [esi + edx]
 			mov[edi + ecx - 1], al; //записываем символ из result в output
@@ -82,7 +81,7 @@ int separateParagraphs(char* temp1, int counter, int* paragraphs, char output[50
 			;//конец
 	ending:
 		push ecx
-			imul ecx, ecx, 400
+			imul ecx, ecx, 1500
 			add ecx, ebx
 			mov[edi + ecx - 1], '\0';//замена последнего элемента массива 
 		pop ecx
@@ -99,9 +98,9 @@ int separateParagraphs(char* temp1, int counter, int* paragraphs, char output[50
 
 	}
 
-	if (counterP > 500) {
-		cout << "В файле более 500 абзацев. Будут взяты только первые 500" << endl;
-		counterP = 500;
+	if (counterP > 250) {
+		cout << "В файле более 250 абзацев. Будут взяты только первые 250" << endl;
+		counterP = 250;
 	}
 
 	for (int i = 0; i < counterP; i++)
@@ -109,8 +108,8 @@ int separateParagraphs(char* temp1, int counter, int* paragraphs, char output[50
 
 		cout << "\n" << i + 1 << " Абзац:" << output[i] << endl;
 		cout << "Количество символов: " << paragraphs[i] << endl;
-		if (paragraphs[i] > 400) {
-			cout << "В абзаце "<<i+1<<" более 400 символов. Сортировка не будет выполнена" << endl;
+		if (paragraphs[i] > 1500) {
+			cout << "В абзаце "<<i+1<<" более 1500 символов. Сортировка не будет выполнена" << endl;
 			return 0;
 		}
 	}
@@ -122,7 +121,7 @@ int separateParagraphs(char* temp1, int counter, int* paragraphs, char output[50
 //Сортировка методом пузырька абзацев по количеству символов. Реализована на ассемблере
 //В Процедуру необходимо передать двумерный массив символов, количество абзацев, указатель на массив, состоящий из количества символов абзацев
 //Процедура ничего не возвращает
-void asmBubbleSort(char output[500][400], int counterP, int* paragraphs) {
+void asmBubbleSort(char output[250][1500], int counterP, int* paragraphs) {
 
 	int i = counterP - 1;
 
@@ -145,15 +144,15 @@ void asmBubbleSort(char output[500][400], int counterP, int* paragraphs) {
 			;//Меняем значения массива output исходя из значений массива paragraphs
 		xor edx, edx
 			push ecx
-			imul ecx, ecx, 400
+			imul ecx, ecx, 1500
 
 			;//Меняем значение каждого символа
 	cngOutpt:
 		mov al, [edi + ecx - 1]
-			xchg[edi + ecx + 399], al
+			xchg[edi + ecx + 1499], al
 			mov[edi + ecx - 1], al
 			inc edx
-			cmp edx, 400
+			cmp edx, 1500
 			loopnz cngOutpt
 			pop ecx
 
@@ -162,7 +161,7 @@ void asmBubbleSort(char output[500][400], int counterP, int* paragraphs) {
 		checkEnd:
 		loop checker; //двигаемся вверх до границы массива
 		add esi, 4;// сдвигаем границу отсортированного массива
-		add edi, 400
+		add edi, 1500
 			dec ebx;// проверяем были ли перестановки
 		jnz ending;// если перестановок не было - заканчиваем сортировку
 		dec i;// уменьшаем количество неотсортированных элементов
@@ -196,9 +195,9 @@ bool ReadFromFile(char* temp, int* a) {
 		temp[counter] = ch;
 		counterN += ch == '\n' ? 1 : 0;
 		counter++;
-		if (counter > 10000)			//Если в файле больше символов, чем может вместить массив - выход
+		if (counter >= 30000)			//Если в файле больше символов, чем может вместить массив - выход
 		{
-			cout << "Символов больше 10000,что превышает размер массива символов, поэтому для сортировки будут использованы только первые 10000" << endl;
+			cout << "Символов больше 30000,что превышает размер массива символов, поэтому для сортировки будут использованы только первые 3000030000" << endl;
 			break;
 		}
 	}
@@ -219,7 +218,7 @@ bool ReadFromFile(char* temp, int* a) {
 
 //Процедура для записи в файл
 //В процедуру передается количество абзацев,двумерный массив символов, массив количества символов
-void WriteInFile(int counterParagraphs, char output[500][400], int paragraphs[500]) {
+void WriteInFile(int counterParagraphs, char output[250][1500], int paragraphs[500]) {
 
 	ofstream outputFile("output.txt"); //запись в файл
 
@@ -238,31 +237,28 @@ void WriteInFile(int counterParagraphs, char output[500][400], int paragraphs[50
 
 int main()
 {
-	auto start_time = std::chrono::steady_clock::now();
+	//auto start_time = std::chrono::steady_clock::now();
 	int l, counter;
-	//SetConsoleCP(1251);
-	//SetConsoleOutputCP(1251);
 	setlocale(LC_ALL, "Russian"); //Русский язык в консоли
 
-	char temp[10000] = { 0 }, output[500][400] = { 0 };
+	char temp[30001] = { 0 }, output[250][1500] = { 0 };
 
 	//Если не удалось прочитать из файла символы или файл пустой - выход из программы
 	if (!ReadFromFile(temp, &counter)) return 0;
 
-	int paragraphs[500] = { 0 };
-
+	int paragraphs[250] = { 0 };
 	cout << "***************Данные из файла:****************" << endl;
 
 	l = separateParagraphs(temp, counter, paragraphs, output);
 	//Если абзацев более одного, то сортируем
 	switch (l)
 	{
-		case 0:
-			return 0;	//В одном из абзаце более 400 символов 
-			break;
-		case 1:
-			cout << "В файле только 1 абзац" << endl;
-			break;
+	case 0:
+		return 0;	//В одном из абзаце более 1500 символов 
+		break;
+	case 1:
+		cout << "В файле только 1 абзац" << endl;
+		break;
 	default:
 		asmBubbleSort(output, l, paragraphs);
 		break;
@@ -273,10 +269,10 @@ int main()
 	cout << "Отсортированные данные сохранены в файле output.txt\n" << endl;
 
 
-	auto end_time = std::chrono::steady_clock::now();
-	auto elapsed_ns = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+	//auto end_time = std::chrono::steady_clock::now();
+	//auto elapsed_ns = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 	//cout << "Время работы программы:" << elapsed_ns.count() << " ms\n";
-	
+
 	system("pause");
 	return 1;
 }
